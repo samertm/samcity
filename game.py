@@ -8,11 +8,11 @@ class Tile(object):
     def __init__(self, img="grass"):
         self.img = img
         
+
 def init_images(tiles_used):
     images = dict()
     for t in tiles_used:
-        if t == "grass":
-            images[t] = pygame.image.load("grass_tile.png").convert()
+        images[t] = pygame.image.load(t + "_tile.png").convert()
     return images
 
 
@@ -23,11 +23,25 @@ def make_board():
             row.append(Tile())
     return spots
 
+
 def display_board(screen, board, images):
     for x, row in enumerate(board):
         for y, tile in enumerate(row):
             screen.blit(images[tile.img], (x*OFFSET, y*OFFSET))
     pygame.display.update()
+
+def flush_events(pygame_events):
+    for event in pygame_events.get():
+        if event.type == pygame.QUIT:
+            return 1
+    return 0
+
+
+def process_mouseclick(pos, board):
+    x, y = pos[0] // 8, pos[1] // 8
+    newTile = Tile("road_ver")
+    board[x][y] = newTile
+
 
 def main():
     pygame.init()
@@ -38,14 +52,20 @@ def main():
     pygame.display.set_caption("SamCity")
     pygame.display.update()
 
-    tiles_used = ["grass"]
+    tiles_used = ["grass", "road_ver", "road_hor"]
     images = init_images(tiles_used)
 
     display_board(screen, board, images)
-    x = 0
 
-    while x == 0:
-        x = 0
+    while True:
+        event = pygame.event.wait()
+        if event.type == pygame.QUIT:
+            return
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                print event.pos
+                process_mouseclick(event.pos, board)
+            display_board(screen, board, images)
 
 if __name__ == "__main__":
     main()
