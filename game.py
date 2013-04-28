@@ -1,15 +1,20 @@
 import pygame
 
-BOARD_LENGTH = 256
+BOARD_LENGTH = 64
 OFFSET = 8
 
-class Tile(object):
-    def __init__(self, type="blank"):
-        self.type = type
 
-    def get_tile(self):
-        if self.type == "blank":
-            return pygame.image.load("grass_tile.png")
+class Tile(object):
+    def __init__(self, img="grass"):
+        self.img = img
+        
+def init_images(tiles_used):
+    images = dict()
+    for t in tiles_used:
+        if t == "grass":
+            images[t] = pygame.image.load("grass_tile.png").convert()
+    return images
+
 
 def make_board():
     spots = [[] for i in range(BOARD_LENGTH)]
@@ -18,13 +23,10 @@ def make_board():
             row.append(Tile())
     return spots
 
-def display_board(screen, board):
+def display_board(screen, board, images):
     for x, row in enumerate(board):
         for y, tile in enumerate(row):
-            if tile.get_tile() is None:
-                print "what the fuckkk"
-            else:
-                screen.blit(tile.get_tile(), (x*OFFSET, y*OFFSET))
+            screen.blit(images[tile.img], (x*OFFSET, y*OFFSET))
     pygame.display.update()
 
 def main():
@@ -35,7 +37,11 @@ def main():
 
     pygame.display.set_caption("SamCity")
     pygame.display.update()
-    display_board(screen, board)
+
+    tiles_used = ["grass"]
+    images = init_images(tiles_used)
+
+    display_board(screen, board, images)
     x = 0
 
     while x == 0:
