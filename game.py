@@ -12,7 +12,7 @@ class Tile(object):
 def init_images(tiles_used):
     images = dict()
     for t in tiles_used:
-        images[t] = pygame.image.load(t + "_tile.png").convert()
+        images[t] = pygame.image.load("res/" + t + "_tile.png").convert()
     return images
 
 
@@ -63,7 +63,6 @@ def main():
             return
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
-                print event.pos
                 process_mouseclick(event.pos, board)
             display_board(screen, board, images)
 
