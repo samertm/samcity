@@ -120,8 +120,6 @@ def process_roads(pos, board, master_roads):
         board[x][y] = Tile("road", "road_hor")
     else:
         dirs = get_directions(pos, roads) 
-        print dirs
-        print pick_road_img(dirs)
         board[x][y] = master_roads[pick_road_img(dirs)]
         for road in roads:
             n_roads = adjacent_roads(road, board)
