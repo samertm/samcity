@@ -87,14 +87,14 @@ def get_directions(pos, points):
     for point in points:
         xx, yy = point
         if x == xx:
-            if y == yy - 1:
+            if y - 1 == yy:
                 dirs.add(DIRECTIONS.North)
-            elif y == yy + 1:
+            if y + 1 == yy:
                 dirs.add(DIRECTIONS.South)
-        elif y == yy:
-            if x == x + 1:
+        if y == yy:
+            if x + 1 == xx:
                 dirs.add(DIRECTIONS.East)
-            elif x == x - 1:
+            if x - 1 == xx:
                 dirs.add(DIRECTIONS.West)
     return dirs
 
@@ -120,6 +120,8 @@ def process_roads(pos, board, master_roads):
         board[x][y] = Tile("road", "road_hor")
     else:
         dirs = get_directions(pos, roads) 
+        print dirs
+        print pick_road_img(dirs)
         board[x][y] = master_roads[pick_road_img(dirs)]
         for road in roads:
             n_roads = adjacent_roads(road, board)
