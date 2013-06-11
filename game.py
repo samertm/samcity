@@ -6,12 +6,12 @@ BOARD_LENGTH = 64
 OFFSET = 8
 IMAGES = ("grass", "road_4way", "road_eastnorth", "road_eastsouth", "road_hor",
 "road_northeastsouth", "road_ver", "road_westeastsouth", "road_westnortheast",
-"road_westnorth", "road_westsouthnorth", "road_westsouth", "house")
+"road_westnorth", "road_westsouthnorth", "road_westsouth", "house", "bulldozer")
 
 DIRECTIONS = namedtuple('DIRECTIONS',
                         ['North', 'South', 'East', 'West'])(0, 1, 2, 3)
 
-STATE = namedtuple('STATE', ['Roads', 'Houses'])(0, 1)
+STATE = namedtuple('STATE', ['Roads', 'Houses', 'Bulldozer'])(0, 1, 2)
 
 GREY = (214, 214, 214)
 
@@ -25,6 +25,7 @@ class Overlay(object):
         self.coords = 0, 0
         self.road_rel = 4, 4
         self.house_rel = 16, 4
+        self.bulldozer_rel = 4, 16
         self.x_offset = 28
         self.y_offset = 28
         self.state = STATE.Roads
@@ -52,9 +53,14 @@ def display_board(screen, board, overlay, images):
     overlay_rect = pygame.Rect(overlay.coords, (28, 28))
     screen.fill(GREY, overlay_rect)
     screen.blit(images["road_ver"], 
-                (overlay.coords[0] + 4, overlay.coords[1] + 4))
+                (overlay.coords[0] + overlay.road_rel[0],
+                 overlay.coords[1] + overlay.road_rel[1]))
     screen.blit(images["house"],
-                (overlay.coords[0] + 16, overlay.coords[1] + 4))
+                (overlay.coords[0] + overlay.house_rel[0],
+                 overlay.coords[1] + overlay.house_rel[1]))
+    screen.blit(images["bulldozer"],
+                (overlay.coords[0] + overlay.bulldozer_rel[0],
+                 overlay.coords[1] + overlay.bulldozer_rel[1]))
     pygame.display.update()
 
 
@@ -107,12 +113,21 @@ def process_overlay(pos, overlay):
         and x <= overlay.house_rel[0] + OFFSET
         and y <= overlay.house_rel[1] + OFFSET):
         overlay.state = STATE.Houses
+    elif (x >= overlay.bulldozer_rel[0] and y >= overlay.bulldozer_rel[1]
+        and x <= overlay.bulldozer_rel[0] + OFFSET
+        and y <= overlay.bulldozer_rel[1] + OFFSET):
+        overlay.state = STATE.Bulldozer
 
 
 def process_house(pos, board):
     x, y = pos
     if board[x][y].kind != "road":
         board[x][y] = Tile("house", "house");
+
+
+def process_bulldozer(pos, board):
+    x, y = pos
+    board[x][y] = Tile()
 
 
 def process_mouseclick(pos, board, overlay, roads):
@@ -125,6 +140,8 @@ def process_mouseclick(pos, board, overlay, roads):
         process_roads((x // 8, y // 8), board, roads)
     elif overlay.state == STATE.Houses:
         process_house((x // 8, y // 8), board)
+    elif overlay.state == STATE.Bulldozer:
+        process_bulldozer((x // 8, y // 8), board)
 
 
 def get_directions(pos, points):
