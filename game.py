@@ -4,19 +4,34 @@ import pygame
 
 BOARD_LENGTH = 64
 OFFSET = 8
-IMAGES = "grass", "road_4way", "road_eastnorth", "road_eastsouth", "road_hor", "road_northeastsouth", "road_ver", "road_westeastsouth", "road_westnortheast", "road_westnorth", "road_westsouthnorth", "road_westsouth"
+IMAGES = ("grass", "road_4way", "road_eastnorth", "road_eastsouth", "road_hor",
+"road_northeastsouth", "road_ver", "road_westeastsouth", "road_westnortheast",
+"road_westnorth", "road_westsouthnorth", "road_westsouth", "house")
 
 DIRECTIONS = namedtuple('DIRECTIONS',
                         ['North', 'South', 'East', 'West'])(0, 1, 2, 3)
+
+STATE = namedtuple('STATE', ['Roads', 'Houses'])(0, 1)
+
+GREY = (214, 214, 214)
 
 class Tile(object):
     def __init__(self, kind="empty", img="grass"):
         self.kind = kind
         self.img = img
 
+class Overlay(object):
+    def __init__(self):
+        self.coords = 0, 0
+        self.road_rel = 4, 4
+        self.house_rel = 16, 4
+        self.x_offset = 28
+        self.y_offset = 28
+        self.state = STATE.Roads
+
 
 def init_images(tiles_used):
-    images = dict()
+    images = {}
     for t in tiles_used:
         images[t] = pygame.image.load("res/" + t + "_tile.png").convert()
     return images
@@ -30,10 +45,16 @@ def make_board():
     return spots
 
 
-def display_board(screen, board, images):
+def display_board(screen, board, overlay, images):
     for x, row in enumerate(board):
         for y, tile in enumerate(row):
             screen.blit(images[tile.img], (x*OFFSET, y*OFFSET))
+    overlay_rect = pygame.Rect(overlay.coords, (28, 28))
+    screen.fill(GREY, overlay_rect)
+    screen.blit(images["road_ver"], 
+                (overlay.coords[0] + 4, overlay.coords[1] + 4))
+    screen.blit(images["house"],
+                (overlay.coords[0] + 16, overlay.coords[1] + 4))
     pygame.display.update()
 
 
@@ -76,9 +97,34 @@ def adjacent_roads(pos, board):
     return validate_roads(points, board)
 
 
-def process_mouseclick(pos, board, roads):
-    x, y = pos[0] // 8, pos[1] // 8
-    process_roads((x, y), board, roads)
+def process_overlay(pos, overlay):
+    x, y = pos[0] - overlay.coords[0], pos[1] - overlay.coords[1]
+    if (x >= overlay.road_rel[0] and y >= overlay.house_rel[1]
+        and x <= overlay.road_rel[0] + OFFSET
+        and y <= overlay.road_rel[1] + OFFSET):
+        overlay.state = STATE.Roads
+    elif (x >= overlay.house_rel[0] and y >= overlay.house_rel[1]
+        and x <= overlay.house_rel[0] + OFFSET
+        and y <= overlay.house_rel[1] + OFFSET):
+        overlay.state = STATE.Houses
+
+
+def process_house(pos, board):
+    x, y = pos
+    if board[x][y].kind != "road":
+        board[x][y] = Tile("house", "house");
+
+
+def process_mouseclick(pos, board, overlay, roads):
+    x, y = pos[0], pos[1]
+    if (x >= overlay.coords[0] and y >= overlay.coords[1]
+        and x <= overlay.coords[0] + overlay.x_offset
+        and y <= overlay.coords[1] + overlay.y_offset):
+        process_overlay((x, y), overlay)
+    elif overlay.state == STATE.Roads:
+        process_roads((x // 8, y // 8), board, roads)
+    elif overlay.state == STATE.Houses:
+        process_house((x // 8, y // 8), board)
 
 
 def get_directions(pos, points):
@@ -154,6 +200,7 @@ def main():
     screen = pygame.display.set_mode([BOARD_LENGTH * OFFSET, BOARD_LENGTH *
                                       OFFSET])
     board = make_board()
+    overlay = Overlay()
 
     pygame.display.set_caption("SamCity")
     pygame.display.update()
@@ -161,7 +208,7 @@ def main():
     images = init_images(IMAGES)
     roads = init_roads()
 
-    display_board(screen, board, images)
+    display_board(screen, board, overlay, images)
 
     while True:
         event = pygame.event.wait()
@@ -169,8 +216,8 @@ def main():
             return
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
-                process_mouseclick(event.pos, board, roads)
-            display_board(screen, board, images)
+                process_mouseclick(event.pos, board, overlay, roads)
+            display_board(screen, board, overlay, images)
 
 if __name__ == "__main__":
     main()
